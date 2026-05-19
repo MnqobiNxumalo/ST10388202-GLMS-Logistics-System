@@ -1,0 +1,126 @@
+﻿@model GLMS.Web.Models.Client
+
+@{
+    ViewData["Title"] = "Client Details";
+}
+
+<h1>Client Details</h1>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h3>@Model.Name</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Client ID:</dt>
+                    <dd class="col-sm-8">@Model.Id</dd>
+
+                    <dt class="col-sm-4">Name:</dt>
+                    <dd class="col-sm-8">@Model.Name</dd>
+
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">
+                        <a href="mailto:@Model.Email">@Model.Email</a>
+                    </dd>
+
+                    <dt class="col-sm-4">Phone Number:</dt>
+                    <dd class="col-sm-8">@Model.PhoneNumber</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Address:</dt>
+                    <dd class="col-sm-8">@Model.Address</dd>
+
+                    <dt class="col-sm-4">Region:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Region == "EMEA")
+                        {
+                            <span class="badge bg-primary">EMEA (Europe, Middle East, Africa)</span>
+                        }
+                        else if (Model.Region == "NA")
+                        {
+                            <span class="badge bg-info">NA (North America)</span>
+                        }
+                        else if (Model.Region == "APAC")
+                        {
+                            <span class="badge bg-success">APAC (Asia Pacific)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@Model.Region</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Total Contracts:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-dark">@(Model.Contracts?.Count ?? 0) Contracts</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a asp-action="Index" class="btn btn-secondary">Back to Clients</a>
+        <a asp-controller="Contracts" asp-action="Create" asp-route-clientId="@Model.Id" class="btn btn-primary">Create Contract for this Client</a>
+    </div>
+</div>
+
+@if (Model.Contracts != null && Model.Contracts.Any())
+{
+    <h3>Contracts for @Model.Name</h3>
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Contract #</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Service Level</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contract in Model.Contracts)
+            {
+                <tr>
+                    <td>@contract.ContractNumber</td>
+                    <td>@contract.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@contract.EndDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (contract.Status == ContractStatus.Active)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else if (contract.Status == ContractStatus.Expired)
+                        {
+                            <span class="badge bg-danger">Expired</span>
+                        }
+                        else if (contract.Status == ContractStatus.OnHold)
+                        {
+                            <span class="badge bg-warning text-dark">On Hold</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Draft</span>
+                        }
+                    </td>
+                    <td>@contract.ServiceLevel</td>
+                    <td>
+                        <a asp-controller="Contracts" asp-action="Details" asp-route-id="@contract.Id" class="btn btn-sm btn-info">View Contract</a>
+                        <a asp-controller="ServiceRequest" asp-action="Create" asp-route-contractId="@contract.Id" class="btn btn-sm btn-success">Create Request</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">
+        No contracts found for this client.
+        <a asp-controller="Contracts" asp-action="Create" asp-route-clientId="@Model.Id">Create the first contract</a>
+    </div>
+}

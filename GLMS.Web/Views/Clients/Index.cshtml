@@ -1,0 +1,38 @@
+﻿@model IEnumerable<GLMS.Web.Models.Client>
+
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<h1>Client Management</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">+ Add New Client</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Region</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Model)
+        {
+            <tr>
+                <td>@client.Name</td>
+                <td>@client.Email</td>
+                <td>@client.PhoneNumber</td>
+                <td>@client.Region</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@client.Id" class="btn btn-sm btn-info">View</a>
+                    <a asp-controller="Contracts" asp-action="Create" asp-route-clientId="@client.Id" class="btn btn-sm btn-success">Create Contract</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

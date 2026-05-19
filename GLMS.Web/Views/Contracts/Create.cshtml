@@ -1,0 +1,96 @@
+﻿@model GLMS.Web.Models.ContractCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Contract";
+}
+
+<h1>Create New Contract</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ClientId" class="form-label">Client *</label>
+                <select asp-for="ClientId" class="form-control">
+                    <option value="">-- Select Client --</option>
+                    @if (Model.AvailableClients != null)
+                    {
+                        @foreach (var client in Model.AvailableClients)
+                        {
+                            <option value="@client.Id">@client.Name</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ClientId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ContractNumber" class="form-label">Contract Number *</label>
+                <input asp-for="ContractNumber" class="form-control" />
+                <span asp-validation-for="ContractNumber" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="StartDate" class="form-label">Start Date *</label>
+                        <input asp-for="StartDate" class="form-control" type="date" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="EndDate" class="form-label">End Date *</label>
+                        <input asp-for="EndDate" class="form-control" type="date" />
+                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="Status" class="form-label">Status *</label>
+                        <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<ContractStatus>()"></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="ServiceLevel" class="form-label">Service Level *</label>
+                        <select asp-for="ServiceLevel" class="form-control">
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Platinum">Platinum</option>
+                        </select>
+                        <span asp-validation-for="ServiceLevel" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="SignedAgreement" class="form-label">Signed Agreement (PDF only)</label>
+                <input asp-for="SignedAgreement" class="form-control" type="file" accept=".pdf" />
+                <small class="text-muted">Only PDF files are allowed.</small>
+                <span asp-validation-for="SignedAgreement" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="TermsAndConditions" class="form-label">Terms & Conditions</label>
+                <textarea asp-for="TermsAndConditions" class="form-control" rows="4"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Contract</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

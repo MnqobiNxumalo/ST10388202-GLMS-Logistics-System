@@ -1,0 +1,75 @@
+﻿@model GLMS.Web.Models.ServiceRequest
+
+@{
+    ViewData["Title"] = "Service Request Details";
+}
+
+<h1>Service Request Details</h1>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3>Request #@Model.Id</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Contract Number:</dt>
+                    <dd class="col-sm-8">@Model.Contract?.ContractNumber</dd>
+
+                    <dt class="col-sm-4">Client:</dt>
+                    <dd class="col-sm-8">@Model.Contract?.Client?.Name</dd>
+
+                    <dt class="col-sm-4">Description:</dt>
+                    <dd class="col-sm-8">@Model.Description</dd>
+
+                    <dt class="col-sm-4">Amount (USD):</dt>
+                    <dd class="col-sm-8">$@Model.AmountUSD.ToString("N2")</dd>
+
+                    <dt class="col-sm-4">Amount (ZAR):</dt>
+                    <dd class="col-sm-8">R @Model.AmountZAR.ToString("N2")</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Exchange Rate:</dt>
+                    <dd class="col-sm-8">@Model.ExchangeRateUsed.ToString("N4") USD/ZAR</dd>
+
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Status == RequestStatus.Pending)
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if (Model.Status == RequestStatus.Approved)
+                        {
+                            <span class="badge bg-info">Approved</span>
+                        }
+                        else if (Model.Status == RequestStatus.InProgress)
+                        {
+                            <span class="badge bg-primary">In Progress</span>
+                        }
+                        else if (Model.Status == RequestStatus.Completed)
+                        {
+                            <span class="badge bg-success">Completed</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Cancelled</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Request Date:</dt>
+                    <dd class="col-sm-8">@Model.RequestDate.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+
+                    <dt class="col-sm-4">Notes:</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Notes) ? "No notes" : Model.Notes)</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        <a asp-controller="Contracts" asp-action="Details" asp-route-id="@Model.ContractId" class="btn btn-info">View Contract</a>
+    </div>
+</div>
