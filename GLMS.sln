@@ -7,6 +7,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLMS.Web", "GLMS.Web\GLMS.W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLMS.Tests", "GLMS.Tests\GLMS.Tests.csproj", "{D6BB9C36-6515-4A4A-B6FA-1DA2BE3E7E9E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLMS.API", "GLMS.API\GLMS.API.csproj", "{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+		Technical_Reflection_Report.md = Technical_Reflection_Report.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLMS.Shared", "GLMS.Shared\GLMS.Shared.csproj", "{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,8 +51,35 @@ Global
 		{D6BB9C36-6515-4A4A-B6FA-1DA2BE3E7E9E}.Release|x64.Build.0 = Release|Any CPU
 		{D6BB9C36-6515-4A4A-B6FA-1DA2BE3E7E9E}.Release|x86.ActiveCfg = Release|Any CPU
 		{D6BB9C36-6515-4A4A-B6FA-1DA2BE3E7E9E}.Release|x86.Build.0 = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|x64.Build.0 = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Debug|x86.Build.0 = Debug|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|x64.ActiveCfg = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|x64.Build.0 = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|x86.ActiveCfg = Release|Any CPU
+		{FEAAA6CD-E4E1-415A-8777-563EAFB84F8B}.Release|x86.Build.0 = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|x64.Build.0 = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Debug|x86.Build.0 = Debug|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|x64.ActiveCfg = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|x64.Build.0 = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|x86.ActiveCfg = Release|Any CPU
+		{76BC9717-6E87-40F3-9291-7F5F7D96B2FB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {94A04A57-020C-44F1-80E4-BEE8677ED4F9}
 	EndGlobalSection
 EndGlobal

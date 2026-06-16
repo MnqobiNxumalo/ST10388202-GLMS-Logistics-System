@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GLMS.Web.Models
+namespace GLMS.Shared.Models
 {
     public enum ContractStatus
     {
@@ -42,7 +42,6 @@ namespace GLMS.Web.Models
         [StringLength(500)]
         public string TermsAndConditions { get; set; } = string.Empty;
 
-        // MAKE THIS NULLABLE - add the ?
         public string? PdfFilePath { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1,27 +1,36 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GLMS.Web.Models;
+using GLMS.Shared.Models;
 using GLMS.Web.Services;
 
 namespace GLMS.Web.Controllers
 {
     public class ClientsController : Controller
     {
-        private readonly IClientRepository _clientRepository;
+        private readonly IApiService _apiService;
 
-        public ClientsController(IClientRepository clientRepository)
+        public ClientsController(IApiService apiService)
         {
-            _clientRepository = clientRepository;
+            _apiService = apiService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var clients = await _clientRepository.GetAllAsync();
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var clients = await _apiService.GetClientsAsync();
             return View(clients);
         }
 
         [HttpGet]
         public IActionResult Create()
         {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
             return View();
         }
 
@@ -29,9 +38,14 @@ namespace GLMS.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Client client)
         {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
             if (ModelState.IsValid)
             {
-                await _clientRepository.AddAsync(client);
+                await _apiService.CreateClientAsync(client);
                 TempData["Success"] = "Client created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -40,7 +54,12 @@ namespace GLMS.Web.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            var client = await _clientRepository.GetByIdAsync(id);
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var client = await _apiService.GetClientByIdAsync(id);
             if (client == null)
             {
                 return NotFound();

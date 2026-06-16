@@ -1,87 +1,101 @@
-﻿using GLMS.Web.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using GLMS.Shared.Models;
+using GLMS.Shared.ViewModels;
 using GLMS.Web.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using ContractModel = GLMS.Web.Models.Contract;
-
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace GLMS.Web.Controllers
 {
     public class ContractsController : Controller
     {
-        private readonly IContractRepository _contractRepository;
-        private readonly IClientRepository _clientRepository;
-        private readonly IFileService _fileService;
+        private readonly IApiService _apiService;
 
-        public ContractsController(
-            IContractRepository contractRepository,
-            IClientRepository clientRepository,
-            IFileService fileService)
+        public ContractsController(IApiService apiService)
         {
-            _contractRepository = contractRepository;
-            _clientRepository = clientRepository;
-            _fileService = fileService;
+            _apiService = apiService;
         }
 
+        // GET: Contracts
         public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, ContractStatus? status)
         {
-            var contracts = await _contractRepository.SearchContractsAsync(startDate, endDate, status);
+            // Check if user is logged in
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
-            // Store filter values for view
+            var contracts = await _apiService.GetContractsAsync(startDate, endDate, status);
+
+            // Pass filter values to view
             ViewBag.CurrentStartDate = startDate;
             ViewBag.CurrentEndDate = endDate;
             ViewBag.CurrentStatus = status;
             ViewBag.StatusList = Enum.GetValues(typeof(ContractStatus))
                 .Cast<ContractStatus>()
-                .Select(s => new SelectListItem { Value = s.ToString(), Text = s.ToString() });
+                .Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = s.ToString(),
+                    Text = s.ToString()
+                });
 
             return View(contracts);
         }
 
+        // GET: Contracts/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
+            var contract = await _apiService.GetContractByIdAsync(id);
+            if (contract == null)
+            {
+                return NotFound();
+            }
+            return View(contract);
+        }
+
+        // GET: Contracts/Create
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var clients = await _clientRepository.GetAllAsync();
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var clients = await _apiService.GetClientsAsync();
             var viewModel = new ContractCreateViewModel
             {
-                AvailableClients = clients.ToList(),
+                AvailableClients = clients,
                 StartDate = DateTime.Today,
                 EndDate = DateTime.Today.AddYears(1),
-                Status = ContractStatus.Draft
+                Status = ContractStatus.Draft,
+                ServiceLevel = "Gold"
             };
             return View(viewModel);
         }
 
+        // POST: Contracts/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ContractCreateViewModel viewModel)
         {
-            // Remove AvailableClients from ModelState validation
+            // Remove AvailableClients from validation
             ModelState.Remove("AvailableClients");
-
-            System.Diagnostics.Debug.WriteLine("=== CREATE CONTRACT POST STARTED ===");
-            System.Diagnostics.Debug.WriteLine($"ModelState IsValid: {ModelState.IsValid}");
-            System.Diagnostics.Debug.WriteLine($"ClientId: {viewModel.ClientId}");
-            System.Diagnostics.Debug.WriteLine($"ContractNumber: {viewModel.ContractNumber}");
 
             if (ModelState.IsValid)
             {
-                string pdfPath = null;
+                string pdfPath = null;  // ← DECLARE THIS HERE!
 
                 // Handle file upload
                 if (viewModel.SignedAgreement != null)
                 {
-                    if (!_fileService.IsValidPdfFile(viewModel.SignedAgreement))
-                    {
-                        ModelState.AddModelError("SignedAgreement", "Only PDF files are allowed.");
-                        viewModel.AvailableClients = (await _clientRepository.GetAllAsync()).ToList();
-                        return View(viewModel);
-                    }
-
-                    pdfPath = await _fileService.SavePdfFileAsync(
-                        viewModel.SignedAgreement,
-                        viewModel.ContractNumber);
+                    // Save the file and get the path
+                    pdfPath = await SavePdfFile(viewModel.SignedAgreement, viewModel.ContractNumber);
                 }
 
                 var contract = new Contract
@@ -93,67 +107,169 @@ namespace GLMS.Web.Controllers
                     Status = viewModel.Status,
                     ServiceLevel = viewModel.ServiceLevel,
                     TermsAndConditions = viewModel.TermsAndConditions,
-                    PdfFilePath = pdfPath,
+                    PdfFilePath = pdfPath,  // ← NOW pdfPath EXISTS!
                     CreatedAt = DateTime.UtcNow
                 };
 
-                await _contractRepository.AddAsync(contract);
+                var created = await _apiService.CreateContractAsync(contract);
                 TempData["Success"] = "Contract created successfully!";
                 return RedirectToAction(nameof(Index));
             }
 
-            // If we get here, ModelState is invalid
-            System.Diagnostics.Debug.WriteLine("ModelState is INVALID. Errors:");
-            foreach (var key in ModelState.Keys)
-            {
-                var errors = ModelState[key]?.Errors;
-                if (errors != null && errors.Any())
-                {
-                    foreach (var error in errors)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {key}: {error.ErrorMessage}");
-                    }
-                }
-            }
-
-            viewModel.AvailableClients = (await _clientRepository.GetAllAsync()).ToList();
+            viewModel.AvailableClients = await _apiService.GetClientsAsync();
             return View(viewModel);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> DownloadPdf(int id)
+        // Helper method to save PDF
+        private async Task<string> SavePdfFile(IFormFile file, string contractNumber)
         {
-            var contract = await _contractRepository.GetByIdAsync(id);
+            if (file == null || file.Length == 0)
+                return null;
 
+            // Create uploads folder if it doesn't exist
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            // Generate unique filename
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"{contractNumber}_{timestamp}.pdf";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            // Save file
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Return relative path for database
+            return $"/uploads/contracts/{fileName}";
+        }
+
+        // GET: Contracts/Edit/5
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var contract = await _apiService.GetContractByIdAsync(id);
             if (contract == null)
             {
-                return NotFound("Contract not found.");
+                return NotFound();
             }
 
-            if (string.IsNullOrEmpty(contract.PdfFilePath))
+            var clients = await _apiService.GetClientsAsync();
+
+            var viewModel = new ContractEditViewModel
             {
-                return NotFound("No PDF file associated with this contract.");
+                Id = contract.Id,
+                ClientId = contract.ClientId,
+                ContractNumber = contract.ContractNumber,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                Status = contract.Status,
+                ServiceLevel = contract.ServiceLevel,
+                TermsAndConditions = contract.TermsAndConditions,
+                AvailableClients = clients
+            };
+
+            return View(viewModel);
+        }
+
+        // POST: Contracts/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, ContractEditViewModel viewModel)
+        {
+            if (id != viewModel.Id)
+            {
+                return BadRequest();
             }
 
-            try
-            {
-                // Get the full file path
-                string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", contract.PdfFilePath.TrimStart('/'));
+            ModelState.Remove("AvailableClients");
 
-                if (!System.IO.File.Exists(fullPath))
+            if (ModelState.IsValid)
+            {
+                var contract = new Contract
                 {
-                    return NotFound("PDF file not found on server.");
+                    Id = viewModel.Id,
+                    ClientId = viewModel.ClientId,
+                    ContractNumber = viewModel.ContractNumber,
+                    StartDate = viewModel.StartDate,
+                    EndDate = viewModel.EndDate,
+                    Status = viewModel.Status,
+                    ServiceLevel = viewModel.ServiceLevel,
+                    TermsAndConditions = viewModel.TermsAndConditions
+                };
+
+                // Update through API
+                var updated = await _apiService.UpdateContractAsync(contract);
+                if (updated)
+                {
+                    TempData["Success"] = "Contract updated successfully!";
+                    return RedirectToAction(nameof(Index));
                 }
 
-                byte[] fileBytes = System.IO.File.ReadAllBytes(fullPath);
-                string fileName = Path.GetFileName(contract.PdfFilePath);
+                TempData["Error"] = "Failed to update contract.";
+            }
 
-                return File(fileBytes, "application/pdf", fileName);
-            }
-            catch (Exception ex)
+            viewModel.AvailableClients = await _apiService.GetClientsAsync();
+            return View(viewModel);
+        }
+
+        // POST: Contracts/UpdateStatus/5
+        [HttpPost]
+        public async Task<IActionResult> UpdateStatus(int id, ContractStatus status)
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
             {
-                return NotFound($"Error retrieving file: {ex.Message}");
+                return Unauthorized();
             }
+
+            var result = await _apiService.UpdateContractStatusAsync(id, status);
+            if (result)
+            {
+                TempData["Success"] = $"Contract status updated to {status}";
+            }
+            else
+            {
+                TempData["Error"] = "Failed to update contract status";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Contracts/DownloadPdf/5
+        public async Task<IActionResult> DownloadPdf(int id)
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var contract = await _apiService.GetContractByIdAsync(id);
+            if (contract == null || string.IsNullOrEmpty(contract.PdfFilePath))
+            {
+                TempData["Error"] = "No PDF file found for this contract.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // In Part 3, PDFs should be served through API
+            var fileBytes = await _apiService.DownloadPdfAsync(id);
+            if (fileBytes == null)
+            {
+                TempData["Error"] = "PDF file not found on server.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            string fileName = Path.GetFileName(contract.PdfFilePath);
+            return File(fileBytes, "application/pdf", fileName);
         }
     }
+
 }

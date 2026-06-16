@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using GLMS.Web.Data;
-using GLMS.Web.Models;
+using GLMS.Shared.Models;
 
 namespace GLMS.Web.Services
 {

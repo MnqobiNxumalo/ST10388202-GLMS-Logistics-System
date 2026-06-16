@@ -1,45 +1,45 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using GLMS.Web.Models;
+using GLMS.Shared.Models;
+using GLMS.Shared.ViewModels;
 using GLMS.Web.Services;
 
 namespace GLMS.Web.Controllers
 {
     public class ServiceRequestController : Controller
     {
-        private readonly IServiceRequestRepository _serviceRequestRepository;
-        private readonly IContractRepository _contractRepository;
-        private readonly ICurrencyService _currencyService;
+        private readonly IApiService _apiService;
 
-        public ServiceRequestController(
-            IServiceRequestRepository serviceRequestRepository,
-            IContractRepository contractRepository,
-            ICurrencyService currencyService)
+        public ServiceRequestController(IApiService apiService)
         {
-            _serviceRequestRepository = serviceRequestRepository;
-            _contractRepository = contractRepository;
-            _currencyService = currencyService;
+            _apiService = apiService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var requests = await _serviceRequestRepository.GetAllAsync();
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var requests = await _apiService.GetServiceRequestsAsync();
             return View(requests);
         }
 
         [HttpGet]
         public async Task<IActionResult> Create(int contractId)
         {
-            var contract = await _contractRepository.GetByIdAsync(contractId);
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var contract = await _apiService.GetContractByIdAsync(contractId);
             if (contract == null)
             {
                 return NotFound();
             }
 
-            
-
-                // Check if contract is valid for service requests
-                if (!await _contractRepository.IsContractActiveForRequestAsync(contractId))
+            if (!contract.CanCreateServiceRequest())
             {
                 TempData["Error"] = "Cannot create service request for expired or on-hold contracts.";
                 return RedirectToAction("Index", "Contracts");
@@ -58,77 +58,65 @@ namespace GLMS.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ServiceRequestViewModel model)
         {
-            ModelState.Remove("ContractDisplayName");
-
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
             if (ModelState.IsValid)
             {
-                // VALIDATION: Check if contract is active for service request
-                bool isContractValid = await _contractRepository.IsContractActiveForRequestAsync(model.ContractId);
-
-                if (!isContractValid)
+                // Check if contract is valid
+                var contract = await _apiService.GetContractByIdAsync(model.ContractId);
+                if (contract == null || !contract.CanCreateServiceRequest())
                 {
-                    ModelState.AddModelError("ContractId",
-                        "Service requests cannot be created for contracts that are Expired or On Hold.");
-
-                    var contract = await _contractRepository.GetByIdAsync(model.ContractId);
-                    model.ContractDisplayName = contract?.ContractNumber;
+                    ModelState.AddModelError("", "Cannot create service request for expired or on-hold contracts.");
                     return View(model);
                 }
 
-                // Get current exchange rate
-                decimal exchangeRate = await _currencyService.GetUsdToZarRateAsync();
-                decimal zarAmount = await _currencyService.ConvertUsdToZarAsync(model.AmountUSD);
+                // Get exchange rate and convert
+                decimal zarAmount = await _apiService.ConvertCurrencyAsync(model.AmountUSD);
+                decimal rate = 19.50m; // You can get this from API response
 
-                var serviceRequest = new ServiceRequest
+                var request = new ServiceRequest
                 {
                     ContractId = model.ContractId,
                     Description = model.Description,
                     AmountUSD = model.AmountUSD,
                     AmountZAR = zarAmount,
-                    ExchangeRateUsed = exchangeRate,
+                    ExchangeRateUsed = rate,
                     Status = RequestStatus.Pending,
                     Notes = model.Notes,
                     RequestDate = DateTime.UtcNow
                 };
 
-                await _serviceRequestRepository.AddAsync(serviceRequest);
+                var created = await _apiService.CreateServiceRequestAsync(request);
                 TempData["Success"] = "Service request created successfully!";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Repopulate contract display name if validation fails
-            var existingContract = await _contractRepository.GetByIdAsync(model.ContractId);
-            model.ContractDisplayName = existingContract?.ContractNumber;
-
             return View(model);
-        }
-
-        // AJAX endpoint for real-time currency conversion
-        [HttpGet]
-        public async Task<IActionResult> GetZarAmount(decimal usdAmount)
-        {
-            if (usdAmount <= 0)
-                return Json(new { zarAmount = 0, rate = 0 });
-
-            decimal rate = await _currencyService.GetUsdToZarRateAsync();
-            decimal zarAmount = usdAmount * rate;
-
-            return Json(new
-            {
-                zarAmount = Math.Round(zarAmount, 2),
-                rate = Math.Round(rate, 4)
-            });
         }
 
         public async Task<IActionResult> Details(int id)
         {
-            var request = await _serviceRequestRepository.GetByIdAsync(id);
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("JWToken")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var request = await _apiService.GetServiceRequestByIdAsync(id);
             if (request == null)
             {
                 return NotFound();
             }
             return View(request);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetZarAmount(decimal usdAmount)
+        {
+            var zarAmount = await _apiService.ConvertCurrencyAsync(usdAmount);
+            return Json(new { zarAmount, rate = 19.50m });
         }
     }
 }

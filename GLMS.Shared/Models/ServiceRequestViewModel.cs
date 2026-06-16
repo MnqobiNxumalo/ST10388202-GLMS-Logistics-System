@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GLMS.Web.Models
+namespace GLMS.Shared.ViewModels
 {
     public class ServiceRequestViewModel
     {
@@ -9,7 +9,7 @@ namespace GLMS.Web.Models
 
         [Required]
         [StringLength(200)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         [Required]
         [Range(0.01, 999999.99)]
@@ -17,9 +17,9 @@ namespace GLMS.Web.Models
         public decimal AmountUSD { get; set; }
 
         [StringLength(500)]
-        public string Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
 
-        // For dropdown display
-        public string ContractDisplayName { get; set; }
+        // For display only
+        public string? ContractDisplayName { get; set; }
     }
 }

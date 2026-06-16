@@ -1,4 +1,4 @@
-﻿@model GLMS.Web.Models.ServiceRequest
+﻿@model GLMS.Shared.Models.ServiceRequest
 
 @{
     ViewData["Title"] = "Service Request Details";
@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-md-6">
                 <dl class="row">
-                    <dt class="col-sm-4">Contract Number:</dt>
+                    <dt class="col-sm-4">Contract:</dt>
                     <dd class="col-sm-8">@Model.Contract?.ContractNumber</dd>
 
                     <dt class="col-sm-4">Client:</dt>
@@ -25,21 +25,21 @@
 
                     <dt class="col-sm-4">Amount (USD):</dt>
                     <dd class="col-sm-8">$@Model.AmountUSD.ToString("N2")</dd>
-
-                    <dt class="col-sm-4">Amount (ZAR):</dt>
-                    <dd class="col-sm-8">R @Model.AmountZAR.ToString("N2")</dd>
                 </dl>
             </div>
             <div class="col-md-6">
                 <dl class="row">
+                    <dt class="col-sm-4">Amount (ZAR):</dt>
+                    <dd class="col-sm-8">R @Model.AmountZAR.ToString("N2")</dd>
+
                     <dt class="col-sm-4">Exchange Rate:</dt>
-                    <dd class="col-sm-8">@Model.ExchangeRateUsed.ToString("N4") USD/ZAR</dd>
+                    <dd class="col-sm-8">@Model.ExchangeRateUsed.ToString("N4")</dd>
 
                     <dt class="col-sm-4">Status:</dt>
                     <dd class="col-sm-8">
                         @if (Model.Status == RequestStatus.Pending)
                         {
-                            <span class="badge bg-warning text-dark">Pending</span>
+                            <span class="badge bg-warning">Pending</span>
                         }
                         else if (Model.Status == RequestStatus.Approved)
                         {
@@ -60,13 +60,18 @@
                     </dd>
 
                     <dt class="col-sm-4">Request Date:</dt>
-                    <dd class="col-sm-8">@Model.RequestDate.ToString("yyyy-MM-dd HH:mm:ss")</dd>
-
-                    <dt class="col-sm-4">Notes:</dt>
-                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Notes) ? "No notes" : Model.Notes)</dd>
+                    <dd class="col-sm-8">@Model.RequestDate.ToString("yyyy-MM-dd HH:mm")</dd>
                 </dl>
             </div>
         </div>
+
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <div class="mt-3">
+                <h5>Notes</h5>
+                <p>@Model.Notes</p>
+            </div>
+        }
     </div>
     <div class="card-footer">
         <a asp-action="Index" class="btn btn-secondary">Back to List</a>

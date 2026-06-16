@@ -1,7 +1,7 @@
-﻿using GLMS.Web.Models;
+﻿using GLMS.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.Contracts;
-using Contract = GLMS.Web.Models.Contract;
+using Contract = GLMS.Shared.Models.Contract;
 
 namespace GLMS.Web.Data
 {

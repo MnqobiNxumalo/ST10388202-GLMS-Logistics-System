@@ -1,5 +1,5 @@
 ﻿using Xunit;
-using GLMS.Web.Models;
+using GLMS.Shared.Models;
 
 namespace GLMS.Tests
 {

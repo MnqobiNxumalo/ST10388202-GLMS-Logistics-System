@@ -1,8 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.Contracts;
 
-namespace GLMS.Web.Models
+namespace GLMS.Shared.Models
 {
     public class Client
     {
@@ -11,24 +10,23 @@ namespace GLMS.Web.Models
 
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Phone]
-        public string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [Required]
         [StringLength(200)]
-        public string Address { get; set; }
+        public string Address { get; set; } = string.Empty;
 
         [Required]
         [StringLength(50)]
-        public string Region { get; set; } // NA, EMEA, APAC
+        public string Region { get; set; } = string.Empty;
 
-        // Navigation property
         public virtual ICollection<Contract> Contracts { get; set; } = new List<Contract>();
     }
 }
